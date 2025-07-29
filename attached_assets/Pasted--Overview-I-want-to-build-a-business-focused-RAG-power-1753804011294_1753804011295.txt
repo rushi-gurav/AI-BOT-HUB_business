@@ -1,0 +1,126 @@
+________________________________________
+🧩 Overview
+I want to build a business-focused, RAG-powered AI chatbot builder using:
+•	Frontend: React (with JSX/TSX)
+•	Backend: Node.js + Express
+•	Database: PostgreSQL
+🚀 The entire system must be deployable and fully functional inside Replit’s free plan, with appropriate optimizations or constraints as needed. This is intended to serve as a foundation for a real startup MVP — so practical functionality, clean architecture, and working integrations are more important than visual polish or extras like voice input.
+________________________________________
+🎯 Core Objective
+Create a system where users can build custom AI bots that:
+•	Use RAG logic to answer ONLY from uploaded documents (PDF/DOCX)
+•	Allow users to plug in their own API keys (OpenAI, OpenRouter, Gemini, Grok, or Custom model)
+•	Embed bots into other websites
+•	Install bots to desktop or mobile devices using PWA (Progressive Web App)
+🟨 Note to Replit: The PWA installation + embedding bots into external sites are absolutely critical to this platform and must be implemented correctly, even if it adds complexity.
+________________________________________
+✅ Key Features
+________________________________________
+1. 🎨 UI/UX Design
+•	Modern dark theme: black background, purple & blue gradients (glassmorphism-inspired)
+•	Fully responsive (mobile-first design)
+•	Use TailwindCSS + optionally Framer Motion
+•	Branding:
+AI Bot Hub by Rushikesh Gurav | Nath IT Solutions Pvt. Ltd.
+________________________________________
+2. 🛠️ Frontend Pages (React + TSX)
+/ – Landing Page
+•	Headline: “Craft Your Perfect AI Companion”
+•	Buttons: Start Creating, Explore Docs
+•	Footer with branding
+/create-bot – Bot Creation Form
+•	Fields:
+o	Bot Name
+o	Description
+o	Greeting Message
+o	API Provider: OpenAI, OpenRouter, Gemini, Grok, Custom
+o	API Key input
+o	Model name (if “Custom” selected)
+o	Upload up to 2 PDFs/DOCX
+o	Admin toggle: “Are you Admin?”
+	If Yes: prompt for Admin Key
+	If key == Rushi@123456coder: unlock unlimited bot creation
+/bots – Your Bots Page
+•	List bots created (limit: 2 unless admin)
+•	Actions: Edit, Use, Embed
+/chat/:botId – Chat UI
+•	Chat interface: user messages → document-based response
+•	Bot answers strictly based on uploaded files
+•	Fully responsive on all screen sizes
+/premium – Upgrade Prompt
+•	Triggered if user tries to create a 3rd bot (and not admin)
+•	Static page (CTA for future use)
+________________________________________
+3. 🔧 Backend API (Node.js + Express)
+•	POST /api/bots → Create bot (handle file uploads via Multer)
+•	GET /api/bots → List user’s bots (anonymous session ID)
+•	GET /api/bots/:id → Get bot config
+•	POST /api/chat/:botId → Handle message:
+o	Use LangChain or custom embedding logic to match context from user’s files
+o	Inject matched content into the user’s prompt
+o	Send to LLM provider using the user’s API key
+o	Return structured response
+________________________________________
+4. 🧠 Chatbot RAG Logic (Core Requirement)
+•	When a user sends a message:
+o	System extracts relevant parts of the uploaded docs using vector similarity (via OpenAI embeddings or custom)
+o	Injects the matched text into the prompt context
+o	Sends the updated prompt to the selected LLM
+o	Returns a response based solely on document content
+•	Works across all providers (OpenAI, OpenRouter, etc.)
+________________________________________
+5. 🔐 Admin + Bot Creation Limits
+•	Non-admins can create max 2 bots
+o	3rd attempt triggers redirect to /premium
+•	Admin key: Rushi@123456coder unlocks:
+o	Unlimited bots
+o	Message: “✅ Unlimited Bot Access Enabled”
+________________________________________
+6. 🌐 Embedding + Desktop/Mobile PWA Access (🚨 Must-Have)
+a. 📎 Embedding into Other Sites
+•	Each bot must expose an iframe embed code like:
+html
+CopyEdit
+<iframe src="https://yourapp.com/embed/:botId" width="400" height="600"></iframe>
+•	/embed/:botId → loads floating chat UI (like Intercom/Drift)
+o	Clean, mobile-first design
+o	Minimal input field for chatting
+b. 📲 PWA (Installable App on Mobile/Desktop)
+❗ This is a critical feature for startup usability – must be prioritized.
+•	Create valid manifest.json and serviceWorker.js
+•	Support “Add to Home Screen” and “Install App” triggers
+•	Add a button like:
+📌 Pin This Bot to Desktop/Mobile
+•	App should launch as standalone window
+•	Bot must still function fully offline (with fallback) or reconnect when online
+________________________________________
+⚙️ Tech Stack Summary
+Layer	Tech
+Frontend	React + TSX
+UI	TailwindCSS + FramerMotion
+Backend	Node.js + Express
+Database	PostgreSQL
+Storage	Multer / Replit FS
+Embedding	LangChain / Custom RAG
+PWA Support	manifest.json + ServiceWorker
+Deployment	Replit (Free Plan)
+Branding	AI Bot Hub by Rushikesh Gurav
+________________________________________
+🚫 What to Exclude
+•	🚫 No signup/login system
+•	🚫 No Firebase or OAuth
+•	🚫 No Stripe/payment integrations (for now)
+________________________________________
+✅ Deployment Goals Recap
+•	Create bots using document-based RAG logic
+•	Use any model provider with user’s own API key
+•	Embed bots on external sites
+•	Install bots on desktop/mobile (PWA)
+•	Fully functional on Replit free tier
+•	Simple UI, clean modular code
+•	Scalable for real startup use
+________________________________________
+🔚 Final Note to Replit Team
+Please approach this as a production-grade prototype. Treat PWA functionality and embedding support as core features, not nice-to-haves. The chatbot logic (RAG) must strictly rely on the user’s uploaded documents and not generate hallucinated content.
+Organize code clearly, structure routes cleanly, and make the platform clean, maintainable, and ready to extend with features like analytics, payments, or auth later.
+✅ This project is intended for real users and businesses, so stability, clarity, and working functionality matter most.
