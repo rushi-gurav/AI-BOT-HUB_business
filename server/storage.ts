@@ -44,6 +44,7 @@ export interface IStorage {
   // Embeddings
   createEmbedding(embedding: InsertEmbedding & { documentId: string }): Promise<Embedding>;
   getEmbeddingsByDocumentId(documentId: string): Promise<Embedding[]>;
+  deleteEmbeddingsByDocumentId(documentId: string): Promise<void>;
   searchSimilarEmbeddings(botId: string, queryEmbedding: number[], limit?: number): Promise<(Embedding & { content: string, documentName: string })[]>;
 }
 
@@ -148,6 +149,10 @@ export class DatabaseStorage implements IStorage {
 
   async getEmbeddingsByDocumentId(documentId: string): Promise<Embedding[]> {
     return await db.select().from(embeddings).where(eq(embeddings.documentId, documentId));
+  }
+
+  async deleteEmbeddingsByDocumentId(documentId: string): Promise<void> {
+    await db.delete(embeddings).where(eq(embeddings.documentId, documentId));
   }
 
   async searchSimilarEmbeddings(botId: string, queryEmbedding: number[], limit: number = 5): Promise<(Embedding & { content: string, documentName: string })[]> {

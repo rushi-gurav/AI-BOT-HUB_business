@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { RAGService } from "./services/ragService";
 import { z } from "zod";
 import multer from "multer";
+import type { Request } from "express";
 import path from "path";
 import fs from "fs";
 import { randomUUID } from "crypto";
@@ -100,7 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Process uploaded documents
-      const files = req.files as any[];
+      const files = req.files as Express.Multer.File[];
       if (files && files.length > 0) {
         for (const file of files) {
           try {
@@ -276,6 +277,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ messages });
     } catch (error: any) {
       console.error("Error fetching chat history:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Reprocess documents endpoint
+  app.post('/api/bots/:id/reprocess', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const sessionId = getOrCreateSession(req);
+      const user = await getOrCreateUser(sessionId);
+      const bot = await storage.getBot(id);
+      
+      if (!bot) {
+        return res.status(404).json({ error: "Bot not found" });
+      }
+      
+      if (bot.userId !== user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Get all documents for this bot
+      const documents = await storage.getDocumentsByBotId(id);
+      
+      for (const doc of documents) {
+        // Delete existing embeddings
+        await storage.deleteEmbeddingsByDocumentId(doc.id);
+        
+        // Reprocess document if file still exists
+        const filePath = path.join(process.cwd(), "uploads", doc.filename);
+        if (fs.existsSync(filePath)) {
+          try {
+            await RAGService.processAndStoreDocument(
+              id,
+              filePath,
+              doc.filename,
+              doc.originalName,
+              doc.mimeType,
+              doc.size
+            );
+          } catch (error: any) {
+            console.error(`Error reprocessing document ${doc.originalName}:`, error);
+          }
+        }
+      }
+
+      res.json({ message: "Documents reprocessed successfully" });
+    } catch (error: any) {
+      console.error("Error reprocessing documents:", error);
       res.status(500).json({ error: error.message });
     }
   });

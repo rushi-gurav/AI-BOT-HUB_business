@@ -33,17 +33,28 @@ export class DocumentProcessor {
   }
 
   private static async processPDF(filePath: string): Promise<string> {
-    // For production, you'd use a library like pdf-parse
-    // For now, we'll return a placeholder
-    const fileContent = fs.readFileSync(filePath);
-    return `[PDF Content] - File size: ${fileContent.length} bytes. PDF processing requires pdf-parse library.`;
+    try {
+      const pdfParse = await import('pdf-parse');
+      const dataBuffer = fs.readFileSync(filePath);
+      const data = await (pdfParse as any).default(dataBuffer);
+      return data.text || 'No text content found in PDF';
+    } catch (error) {
+      console.error('PDF processing error:', error);
+      const fileContent = fs.readFileSync(filePath);
+      return `[PDF Content] - File size: ${fileContent.length} bytes. Error processing PDF: ${error}`;
+    }
   }
 
   private static async processDOCX(filePath: string): Promise<string> {
-    // For production, you'd use a library like mammoth
-    // For now, we'll return a placeholder
-    const fileContent = fs.readFileSync(filePath);
-    return `[DOCX Content] - File size: ${fileContent.length} bytes. DOCX processing requires mammoth library.`;
+    try {
+      const mammoth = await import('mammoth');
+      const result = await (mammoth as any).extractRawText({ path: filePath });
+      return result.value || 'No text content found in DOCX';
+    } catch (error) {
+      console.error('DOCX processing error:', error);
+      const fileContent = fs.readFileSync(filePath);
+      return `[DOCX Content] - File size: ${fileContent.length} bytes. Error processing DOCX: ${error}`;
+    }
   }
 
   private static async processText(filePath: string): Promise<string> {

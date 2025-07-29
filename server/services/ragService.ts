@@ -18,7 +18,7 @@ export class RAGService {
 
   static async generateEmbeddings(text: string): Promise<number[]> {
     try {
-      if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== "default_key") {
+      if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim() !== "" && process.env.OPENAI_API_KEY !== "default_key") {
         const response = await this.openai.embeddings.create({
           model: "text-embedding-3-small",
           input: text,
