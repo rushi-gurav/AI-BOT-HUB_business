@@ -30,7 +30,7 @@ export default function Bots() {
 
   const { data: botsData, isLoading } = useQuery({
     queryKey: ['/api/bots'],
-  });
+  }) as { data: { bots: BotData[], isAdmin: boolean, canCreateMore: boolean } | undefined, isLoading: boolean };
 
   const deleteBotMutation = useMutation({
     mutationFn: async (botId: string) => {
@@ -99,16 +99,16 @@ export default function Bots() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="flex items-center justify-between mb-8"
+            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
           >
-            <h2 className="text-3xl font-bold gradient-text">Your AI Bots</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Your AI Bots</h2>
             <Button 
-              onClick={() => setLocation('/create-bot')}
+              onClick={() => canCreateMore ? setLocation('/create-bot') : setLocation('/premium')}
               className="gradient-bg text-white font-semibold hover:opacity-90"
-              disabled={!canCreateMore}
             >
               <Plus className="mr-2" size={20} />
-              Create New Bot
+              <span className="hidden sm:inline">{canCreateMore ? 'Create New Bot' : 'Upgrade to Premium'}</span>
+              <span className="sm:hidden">{canCreateMore ? 'Create' : 'Premium'}</span>
             </Button>
           </motion.div>
           
@@ -154,7 +154,7 @@ export default function Bots() {
             </Card>
           )}
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
             {bots.map((bot: BotData, index: number) => (
               <motion.div
                 key={bot.id}
@@ -198,7 +198,7 @@ export default function Bots() {
                       <span>{bot.documentCount} documents</span>
                     </div>
                     
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button 
                         size="sm"
                         onClick={() => setLocation(`/chat/${bot.id}`)}

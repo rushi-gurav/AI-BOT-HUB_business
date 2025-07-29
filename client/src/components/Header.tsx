@@ -28,10 +28,12 @@ export default function Header() {
               <FileText className="inline mr-1" size={16} />
               Docs
             </a>
-            <Button variant="outline" size="sm" className="border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white">
-              <LogOut size={16} className="mr-2" />
-              Logout
-            </Button>
+            <Link href="/bots">
+              <Button variant="outline" size="sm" className="border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white">
+                <Settings size={16} className="mr-2" />
+                Back
+              </Button>
+            </Link>
           </nav>
           
           <button className="md:hidden text-white">

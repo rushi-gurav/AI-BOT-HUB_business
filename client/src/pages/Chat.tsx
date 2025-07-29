@@ -43,6 +43,7 @@ export default function Chat({ params }: { params: { botId: string } }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { canInstall, install } = usePWAInstall();
+  const queryClient = useQueryClient();
 
   const { data: bot, isLoading: botLoading } = useQuery<BotData>({
     queryKey: ['/api/bots', params.botId],
@@ -62,7 +63,7 @@ export default function Chat({ params }: { params: { botId: string } }) {
     onSuccess: () => {
       setMessage("");
       // Invalidate and refetch chat history
-      useQueryClient().invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: ['/api/chat', params.botId, 'history'],
       });
     },
@@ -140,27 +141,27 @@ export default function Chat({ params }: { params: { botId: string } }) {
     <div className="fixed inset-0 bg-black text-white z-50">
       <div className="flex flex-col h-full">
         {/* Chat Header */}
-        <div className="glassmorphism p-4 flex items-center justify-between border-b border-gray-800">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
-              <Bot className="text-white" size={20} />
+        <div className="glassmorphism p-3 sm:p-4 flex items-center justify-between border-b border-gray-800">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 gradient-bg rounded-lg flex items-center justify-center flex-shrink-0">
+              <Bot className="text-white" size={16} />
             </div>
-            <div>
-              <h3 className="font-semibold">{bot.name}</h3>
-              <p className="text-xs text-gray-400">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-sm sm:text-base truncate">{bot.name}</h3>
+              <p className="text-xs text-gray-400 truncate hidden sm:block">
                 Powered by {bot.apiProvider} {bot.modelName}
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
             {canInstall && (
               <Button
                 onClick={handleInstallPWA}
                 size="sm"
-                className="bg-green-500 bg-opacity-20 text-green-500 hover:bg-green-500 hover:text-white"
+                className="bg-green-500 bg-opacity-20 text-green-500 hover:bg-green-500 hover:text-white text-xs"
               >
-                <Smartphone size={16} className="mr-1" />
-                <span className="hidden sm:inline">Pin App</span>
+                <Smartphone size={14} className="mr-1" />
+                <span className="hidden xs:inline">Install</span>
               </Button>
             )}
             <Button
