@@ -154,8 +154,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const botsWithCounts = await Promise.all(
         bots.map(async (bot) => {
           const documents = await storage.getDocumentsByBotId(bot.id);
+          const { apiKey, ...safeBot } = bot as any;
           return {
-            ...bot,
+            ...safeBot,
             documentCount: documents.length,
           };
         })
