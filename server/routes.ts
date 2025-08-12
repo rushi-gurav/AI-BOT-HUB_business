@@ -125,8 +125,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Enhanced response validation and error handling
+      const { apiKey: _removed, ...safeBot } = bot as any;
       const response = {
-        bot,
+        bot: safeBot,
         message: user.isAdmin ? "✅ Unlimited Bot Access Enabled" : "Bot created successfully",
         failedDocuments: failedDocuments.length > 0 ? failedDocuments : undefined,
       };
@@ -154,8 +155,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const botsWithCounts = await Promise.all(
         bots.map(async (bot) => {
           const documents = await storage.getDocumentsByBotId(bot.id);
+          const { apiKey, ...safeBot } = bot as any;
           return {
-            ...bot,
+            ...safeBot,
             documentCount: documents.length,
           };
         })

@@ -30,6 +30,9 @@ export default function Bots() {
 
   const { data: botsData, isLoading } = useQuery({
     queryKey: ['/api/bots'],
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
   }) as { data: { bots: BotData[], isAdmin: boolean, canCreateMore: boolean } | undefined, isLoading: boolean };
 
   const deleteBotMutation = useMutation({

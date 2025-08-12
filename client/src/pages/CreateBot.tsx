@@ -115,12 +115,13 @@ export default function CreateBot() {
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast({
         title: "Bot Created Successfully!",
         description: data.message || "Your AI bot has been created and is ready to use.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/bots'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/bots'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/bots'] });
       setLocation('/bots');
     },
     onError: (error: any) => {

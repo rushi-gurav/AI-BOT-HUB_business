@@ -113,13 +113,14 @@ export default function EditBot({ params }: { params: { botId: string } }) {
       const response = await apiRequest('PUT', `/api/bots/${params.botId}`, data);
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast({
         title: "Bot Updated Successfully!",
         description: data.message || "Your bot settings have been updated.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/bots'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bots', params.botId] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/bots'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/bots'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/bots', params.botId] });
       setLocation('/bots');
     },
     onError: (error: any) => {

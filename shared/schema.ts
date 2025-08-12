@@ -20,6 +20,7 @@ export const bots = pgTable("bots", {
   apiProvider: varchar("api_provider").notNull(), // openai, openrouter, gemini, grok, custom
   apiKey: text("api_key").notNull(),
   modelName: text("model_name").notNull(),
+  status: varchar("status").notNull().default("active"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
