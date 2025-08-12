@@ -173,6 +173,7 @@ export default function Bots() {
                           size="sm" 
                           variant="outline"
                           className="w-8 h-8 p-0 border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+                          onClick={() => setLocation(`/edit-bot/${bot.id}`)}
                         >
                           <Edit size={14} />
                         </Button>

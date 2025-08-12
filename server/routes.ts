@@ -102,6 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Process uploaded documents
       const files = req.files as Express.Multer.File[];
+      const failedDocuments: string[] = [];
       if (files && files.length > 0) {
         for (const file of files) {
           try {
@@ -118,14 +119,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             fs.unlinkSync(file.path);
           } catch (error: any) {
             console.error(`Error processing document ${file.originalname}:`, error);
+            failedDocuments.push(file.originalname);
           }
         }
       }
 
-      res.json({ 
+      // Enhanced response validation and error handling
+      const response = {
         bot,
-        message: user.isAdmin ? "✅ Unlimited Bot Access Enabled" : "Bot created successfully"
-      });
+        message: user.isAdmin ? "✅ Unlimited Bot Access Enabled" : "Bot created successfully",
+        failedDocuments: failedDocuments.length > 0 ? failedDocuments : undefined,
+      };
+
+      if (failedDocuments.length > 0) {
+        response.message += `, but some documents failed to process: ${failedDocuments.join(", ")}`;
+      }
+
+      res.json(response);
     } catch (error: any) {
       console.error("Error creating bot:", error);
       res.status(500).json({ error: error.message });
@@ -212,6 +222,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update bot endpoint
+  app.put('/api/bots/:id', async (req, res) => {
+    try {
+      const sessionId = getOrCreateSession(req);
+      const user = await getOrCreateUser(sessionId);
+      const bot = await storage.getBot(req.params.id);
+      
+      if (!bot) {
+        return res.status(404).json({ error: "Bot not found" });
+      }
+      
+      if (bot.userId !== user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      console.log('Updating bot:', req.params.id);
+      console.log('Update data:', { ...req.body, apiKey: req.body.apiKey ? '[HIDDEN]' : '[NOT PROVIDED]' });
+
+      // Validate update data
+      const updateData = insertBotSchema.pick({
+        name: true,
+        description: true,
+        greeting: true,
+        apiProvider: true,
+        apiKey: true,
+        modelName: true,
+      }).parse(req.body);
+
+      // Only update API key if it's provided (not empty)
+      const finalUpdateData = {
+        name: updateData.name,
+        description: updateData.description,
+        greeting: updateData.greeting,
+        apiProvider: updateData.apiProvider,
+        modelName: updateData.modelName,
+        ...(updateData.apiKey && updateData.apiKey.trim() !== '' && { apiKey: updateData.apiKey })
+      };
+
+      // Update bot
+      const updatedBot = await storage.updateBot(req.params.id, finalUpdateData);
+      
+      if (!updatedBot) {
+        return res.status(404).json({ error: "Bot not found" });
+      }
+
+      console.log('Bot updated successfully:', { 
+        id: updatedBot.id, 
+        name: updatedBot.name, 
+        apiProvider: updatedBot.apiProvider, 
+        modelName: updatedBot.modelName,
+        apiKey: updatedBot.apiKey ? '[UPDATED]' : '[NOT UPDATED]'
+      });
+
+      res.json({ 
+        bot: updatedBot,
+        message: "Bot updated successfully" 
+      });
+    } catch (error: any) {
+      console.error("Error updating bot:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Chat with bot
   app.post('/api/chat/:botId', async (req, res) => {
     try {
@@ -239,6 +312,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
           content: msg.content,
         }));
+
+      // Get bot data for debugging
+      const bot = await storage.getBot(botId);
+      console.log('Chat request - Bot data:', {
+        id: bot?.id,
+        name: bot?.name,
+        apiProvider: bot?.apiProvider,
+        modelName: bot?.modelName,
+        apiKey: bot?.apiKey ? '[PRESENT]' : '[MISSING]'
+      });
 
       // Generate RAG response
       const ragResponse = await RAGService.generateRAGResponse(

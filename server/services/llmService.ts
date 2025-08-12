@@ -97,21 +97,28 @@ export class LLMService {
       ...messages.filter(m => m.role !== 'system')
     ];
 
-    const response = await openai.chat.completions.create({
-      model: model || "anthropic/claude-3-haiku",
-      messages: finalMessages,
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
+    try {
+      const response = await openai.chat.completions.create({
+        model: model || "anthropic/claude-3-haiku",
+        messages: finalMessages,
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
 
-    return {
-      content: response.choices[0].message.content || "",
-      usage: response.usage ? {
-        prompt_tokens: response.usage.prompt_tokens,
-        completion_tokens: response.usage.completion_tokens,
-        total_tokens: response.usage.total_tokens,
-      } : undefined,
-    };
+      return {
+        content: response.choices[0].message.content || "",
+        usage: response.usage ? {
+          prompt_tokens: response.usage.prompt_tokens,
+          completion_tokens: response.usage.completion_tokens,
+          total_tokens: response.usage.total_tokens,
+        } : undefined,
+      };
+    } catch (error: any) {
+      if (error.message?.includes('404') || error.message?.includes('No endpoints found')) {
+        throw new Error(`Model "${model}" not found on OpenRouter. Please check the model name or try a different model like "anthropic/claude-3-haiku" or "openai/gpt-4o".`);
+      }
+      throw error;
+    }
   }
 
   private static async callGemini(

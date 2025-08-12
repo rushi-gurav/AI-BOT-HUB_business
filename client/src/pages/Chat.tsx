@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Bot, User, Send, Smartphone, X, FileText, Loader2 } from "lucide-react";
+import { Bot, User, Send, Smartphone, X, FileText, Loader2, Settings, RefreshCw } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -40,18 +40,30 @@ interface BotData {
 export default function Chat({ params }: { params: { botId: string } }) {
   const [, setLocation] = useLocation();
   const [message, setMessage] = useState("");
+  const [recentError, setRecentError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { canInstall, install } = usePWAInstall();
   const queryClient = useQueryClient();
 
-  const { data: bot, isLoading: botLoading } = useQuery<BotData>({
+  const { data: bot, isLoading: botLoading, refetch: refetchBot } = useQuery<BotData>({
     queryKey: ['/api/bots', params.botId],
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: chatHistory, isLoading: historyLoading } = useQuery<{ messages: ChatMessage[] }>({
     queryKey: ['/api/chat', params.botId, 'history'],
   });
+
+  const handleRefreshBot = () => {
+    refetchBot();
+    toast({
+      title: "Refreshing...",
+      description: "Bot data refreshed successfully.",
+    });
+  };
 
   const sendMessageMutation = useMutation({
     mutationFn: async (messageContent: string) => {
@@ -68,16 +80,42 @@ export default function Chat({ params }: { params: { botId: string } }) {
       });
     },
     onError: (error: any) => {
+      let errorMessage = error.message || "Failed to send message";
+      let errorTitle = "Error";
+      
+      // Check for specific model errors
+      if (error.message?.includes('404') || error.message?.includes('No endpoints found')) {
+        errorTitle = "Model Not Found";
+        errorMessage = "The AI model configured for this bot is not available. Please edit your bot settings and choose a valid model.";
+        setRecentError("model-not-found");
+      } else if (error.message?.includes('API key') || error.message?.includes('authentication')) {
+        errorTitle = "API Key Error";
+        errorMessage = "There's an issue with your API key. Please check your bot settings.";
+        setRecentError("api-key-error");
+      }
+      
       toast({
-        title: "Error",
-        description: error.message || "Failed to send message",
+        title: errorTitle,
+        description: errorMessage,
         variant: "destructive",
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation(`/edit-bot/${params.botId}`)}
+            className="text-white"
+          >
+            <Settings className="mr-1" size={14} />
+            Edit Bot
+          </Button>
+        ),
       });
     },
   });
 
   const handleSendMessage = () => {
     if (!message.trim() || sendMessageMutation.isPending) return;
+    setRecentError(null); // Clear any previous errors
     sendMessageMutation.mutate(message);
   };
 
@@ -151,6 +189,10 @@ export default function Chat({ params }: { params: { botId: string } }) {
               <p className="text-xs text-gray-400 truncate hidden sm:block">
                 Powered by {bot.apiProvider} {bot.modelName}
               </p>
+              {/* Debug info - remove in production */}
+              <p className="text-xs text-red-400 truncate hidden sm:block">
+                Debug: {bot.apiProvider} | {bot.modelName}
+              </p>
             </div>
           </div>
           <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
@@ -164,6 +206,14 @@ export default function Chat({ params }: { params: { botId: string } }) {
                 <span className="hidden xs:inline">Install</span>
               </Button>
             )}
+            <Button
+              onClick={handleRefreshBot}
+              size="sm"
+              variant="outline"
+              className="glassmorphism border-gray-600 hover:bg-white hover:bg-opacity-10"
+            >
+              <RefreshCw size={16} />
+            </Button>
             <Button
               onClick={() => setLocation('/bots')}
               size="sm"
@@ -191,6 +241,35 @@ export default function Chat({ params }: { params: { botId: string } }) {
                 <p>{bot.greeting}</p>
               </div>
             </motion.div>
+
+            {/* Error Message */}
+            {recentError && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-start space-x-3"
+              >
+                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Settings className="text-white" size={16} />
+                </div>
+                <div className="chat-bubble-bot p-4 rounded-2xl rounded-tl-sm max-w-2xl border border-red-500 bg-red-900 bg-opacity-20">
+                  <p className="mb-3">
+                    {recentError === "model-not-found" 
+                      ? "⚠️ The AI model configured for this bot is not available. This might be due to an invalid model name or the model being temporarily unavailable."
+                      : "⚠️ There's an issue with your API key. Please check your bot settings."
+                    }
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() => setLocation(`/edit-bot/${params.botId}`)}
+                    className="gradient-bg text-white hover:opacity-90"
+                  >
+                    <Settings className="mr-1" size={14} />
+                    Fix Bot Settings
+                  </Button>
+                </div>
+              </motion.div>
+            )}
 
             {/* Chat History */}
             {historyLoading ? (

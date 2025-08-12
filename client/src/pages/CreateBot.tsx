@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Upload, Loader2, CheckCircle } from "lucide-react";
+import { Upload, Loader2, CheckCircle, Info } from "lucide-react";
 import { useLocation } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,38 @@ const createBotSchema = z.object({
 
 type CreateBotFormData = z.infer<typeof createBotSchema>;
 
+// Model suggestions for each provider
+const MODEL_SUGGESTIONS = {
+  openai: [
+    "gpt-4o",
+    "gpt-4o-mini", 
+    "gpt-4-turbo",
+    "gpt-3.5-turbo"
+  ],
+  openrouter: [
+    "anthropic/claude-3-haiku",
+    "anthropic/claude-3-sonnet",
+    "openai/gpt-4o",
+    "openai/gpt-4o-mini",
+    "meta-llama/llama-3.1-8b-instruct",
+    "meta-llama/llama-3.1-70b-instruct"
+  ],
+  gemini: [
+    "gemini-pro",
+    "gemini-1.5-pro",
+    "gemini-1.5-flash"
+  ],
+  grok: [
+    "grok-2-1212",
+    "grok-2-1212-beta"
+  ],
+  custom: [
+    "custom-model",
+    "llama-3.1-8b",
+    "llama-3.1-70b"
+  ]
+};
+
 export default function CreateBot() {
   const [, setLocation] = useLocation();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -50,6 +82,9 @@ export default function CreateBot() {
       adminKey: "",
     },
   });
+
+  // Watch the API provider to update model suggestions
+  const selectedProvider = form.watch("apiProvider");
 
   const createBotMutation = useMutation({
     mutationFn: async (data: CreateBotFormData) => {
@@ -243,11 +278,31 @@ export default function CreateBot() {
                           <FormItem>
                             <FormLabel>Model Name</FormLabel>
                             <FormControl>
-                              <Input 
-                                placeholder="gpt-4o" 
-                                className="bg-gray-800 border-gray-700" 
-                                {...field} 
-                              />
+                              <div className="space-y-2">
+                                <Input 
+                                  placeholder={MODEL_SUGGESTIONS[selectedProvider as keyof typeof MODEL_SUGGESTIONS]?.[0] || "Enter model name"} 
+                                  className="bg-gray-800 border-gray-700" 
+                                  {...field} 
+                                />
+                                <div className="text-xs text-gray-400 space-y-1">
+                                  <div className="flex items-center gap-1">
+                                    <Info size={12} />
+                                    <span>Suggested models for {selectedProvider}:</span>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {MODEL_SUGGESTIONS[selectedProvider as keyof typeof MODEL_SUGGESTIONS]?.map((model) => (
+                                      <button
+                                        key={model}
+                                        type="button"
+                                        onClick={() => field.onChange(model)}
+                                        className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded border border-gray-600 transition-colors"
+                                      >
+                                        {model}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>

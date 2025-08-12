@@ -10,6 +10,7 @@ import Bots from "@/pages/Bots";
 import Chat from "@/pages/Chat";
 import Premium from "@/pages/Premium";
 import Embed from "@/pages/Embed";
+import EditBot from "@/pages/EditBot";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/create-bot" component={CreateBot} />
       <Route path="/bots" component={Bots} />
       <Route path="/chat/:botId" component={Chat} />
+      <Route path="/edit-bot/:botId" component={EditBot} />
       <Route path="/premium" component={Premium} />
       <Route path="/embed/:botId" component={Embed} />
       <Route component={NotFound} />
